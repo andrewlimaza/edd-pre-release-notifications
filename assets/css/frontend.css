@@ -1,0 +1,10 @@
+.pps_edd_prn_subscribe_form label,
+.pps_edd_prn_subscribe_form input[type='text'],
+.pps_edd_prn_subscribe_form input[type='email']{
+	display: block;
+	width: 100%;	
+}
+
+.pps_edd_prn_subscribe_form input{
+	margin: 5px 0;
+}
