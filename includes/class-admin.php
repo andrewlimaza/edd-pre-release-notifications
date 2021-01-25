@@ -45,7 +45,7 @@ class EDD_Pre_Release_Notifications_Admin {
 
         $is_active = pps_edd_prn_is_prerelease_active( $download_id );
 
-        if ( $is_active ) {
+        if ( $is_active && is_admin() ) {
 
             $price .= '<br /><strong>' . __( 'Subscribers: ', 'edd-coming-soon' ) . "<a href='".admin_url( 'edit.php?post_type=pp_edd_prn&edd_download='.$download_id )."' title='View Subscribers' >" . get_total_subcribers( $download_id ) . "</a>" . '</strong>';
 

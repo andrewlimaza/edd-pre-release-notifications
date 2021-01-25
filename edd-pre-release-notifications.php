@@ -19,6 +19,7 @@ define( 'EDD_PRE_RELEASE_N_VERSION', '1.0.0' );
 define( 'EDD_PRE_RELEASE_N_URL', plugins_url( '', __FILE__ ) );
 
 require plugin_dir_path( __FILE__ ).'includes/functions.php';
+require plugin_dir_path( __FILE__ ).'includes/class-mailchimp.php';
 require plugin_dir_path( __FILE__ ).'includes/class-admin.php';
 require plugin_dir_path( __FILE__ ).'includes/settings.php';
 
@@ -39,6 +40,11 @@ class EDD_Pre_Release_Notifications{
 
 		add_action( 'wp_ajax_pps_edd_prn_subscribe', array( $this, 'form_submission' ) );
 		add_action( 'wp_ajax_nopriv_pps_edd_prn_subscribe', array( $this, 'form_submission' ) );
+
+		add_filter( 'post_row_actions', array( $this, 'row_actions' ), 10, 2 );
+
+		add_action( 'admin_init', array( $this, 'send_notification' ) );
+
 	}
 
 	public function frontend_scripts(){
@@ -143,6 +149,12 @@ class EDD_Pre_Release_Notifications{
 				echo 'Subscribed';
 			} else if( $subscribed == 'notified' ){
 				echo 'Notified';
+			}
+		}
+		if( $column == 'pps_edd_mailchimp' ){
+			$subscribed = intval( get_post_meta( $post_id, 'pps_edd_prn_mc_subscribed', true ) );
+			if( $subscribed === 1 ){
+				echo 'Subscribed';
 			}
 		}
 	}
@@ -252,12 +264,101 @@ class EDD_Pre_Release_Notifications{
 				update_post_meta( $post_id, 'pps_edd_prn_download', $download );
 				update_post_meta( $post_id, 'pps_edd_prn_status', 'subscribed' );
 
+				do_action( 'pps_edd_prn_user_subscribed', $_REQUEST, $post_id );
+
+				if( pps_edd_prn_is_mc_configured() ){
+
+					$mc = new PPSEDDPRNMailchimp();
+
+					$tags = array(
+						'FNAME' => ( !empty( $_REQUEST['fname'] ) ) ? $_REQUEST['fname'] : "",
+						'LNAME' => ( !empty( $_REQUEST['lname'] ) ) ? $_REQUEST['lname'] : "",
+						'DOWNLOAD' => $post_id
+					);
+
+					$subscribed = $mc->subscribe( $_REQUEST['email'], $tags );		
+
+					update_post_meta( $post_id, 'pps_edd_prn_mc_subscribed', 1 );
+
+				}
+
+				$this->send_welcome_email( $post_id );
+
 				echo $post_id;
 
 				wp_die();
 
 			}
 
+		}
+
+	}
+
+	public function row_actions( $actions, $post ){
+
+		if( $post->post_type == 'pp_edd_prn' ){
+        	
+        	$actions['edd_prn_send'] = '<a href="'.admin_url( 'edit.php?post_type=pp_edd_prn' ).'&send_notification='.$post->ID.'" title="" rel="permalink">'.__('Send Notification', 'edd-pre-release-notifications').'</a>';
+    	
+    	}
+    
+    	return $actions;
+
+	}
+
+	public function send_notification(){
+
+		if( !empty( $_REQUEST['send_notification'] ) ){
+
+			$post_id = intval( $_REQUEST['send_notification'] );
+
+			$noti = get_post( $post_id );
+			$fname = get_post_meta( $post_id, 'pps_edd_prn_fname', true );
+			$lname = get_post_meta( $post_id, 'pps_edd_prn_lname', true );
+
+			$download = intval( get_post_meta( $post_id, 'pps_edd_prn_download', true ) );
+
+			$get_download = edd_get_download( $download );
+
+			$email = edd_get_option( 'pps_edd_prns_release_email' );
+
+			$content = $this->replace_email_keys( $email, array( 'name' => $fname.' '.$lname, 'download' => $get_download->post_title ) );
+
+			wp_mail( $noti->post_title, 'Just Released!', $content );
+
+		}
+	}
+
+	function send_welcome_email( $post_id ){
+
+		if( intval( edd_get_option( 'pps_edd_prns_welcome_email' ) ) ){
+
+			$noti = get_post( $post_id );
+			$fname = get_post_meta( $post_id, 'pps_edd_prn_fname', true );
+			$lname = get_post_meta( $post_id, 'pps_edd_prn_lname', true );
+
+			$download = intval( get_post_meta( $post_id, 'pps_edd_prn_download', true ) );
+
+			$get_download = edd_get_download( $download );
+
+			$email = edd_get_option( 'pps_edd_prns_welcome_email' );
+
+			$content = $this->replace_email_keys( $email, array( 'name' => $fname.' '.$lname, 'download' => $get_download->post_title ) );
+
+			wp_mail( $noti->post_title, 'You\'ve been successfully subscribed', $content );
+
+		}
+
+	}
+
+	function replace_email_keys( $content, $values ){
+
+		if( !empty( $values['name'] ) ){
+			$content = str_replace('!!name!!', $values['name'], $content );
+		}
+
+		if( !empty( $values['download'] ) ){
+			$content = str_replace('!!download!!', $values['download'], $content );
 		}
 
 	}
