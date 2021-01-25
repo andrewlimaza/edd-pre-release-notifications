@@ -65,6 +65,13 @@ function pps_edd_prns_settings( $settings ) {
 				'std'  => __( 'Signup Fee', 'edd-recurring' )
 			),
 			array(
+				'id'   => 'pps_edd_prns_mc_audience',
+				'name' => __( 'Mailchimp Audience', 'edd-recurring' ),
+				'desc' => __( 'Select Which Audience Subscribers Should Be Added To.', 'edd-recurring' ),
+				'type' => 'select',
+				'options' => pps_edd_prn_mailchimp_audience()
+			),
+			array(
 				'id'    => 'pps_edd_prns_enable_welcome',
 				'name'  => __( 'Enable Pre-Release Welcome Email', 'edd-recurring' ),
 				'desc'  => __( 'Check this if you\'d like to send an email to users when they subscribe for notifications. Typically used to thank them for signing up.', 'edd-recurring' ),
@@ -73,14 +80,14 @@ function pps_edd_prns_settings( $settings ) {
 			array(
 				'id'    => 'pps_edd_prns_welcome_email',
 				'name'  => __( 'Subscribed Email', 'edd-recurring' ),
-				'desc'  => __( 'Enter the body text of the email sent when a user subscribes for a pre-release notification.', 'edd-recurring' ),
+				'desc'  => __( 'Enter the body text of the email sent when a user subscribes for a pre-release notification. <code>!!name!!</code> and <code>!!download!!</code> shortcdes available.', 'edd-recurring' ),
 				'type'  => 'rich_editor',
 				'std'   => __( "Hello {name}\n\nYour renewal payment in the amount of {amount} for {subscription_name} has been successfully processed.", 'edd-recurring' )
 			),
 			array(
 				'id'    => 'pps_edd_prns_release_email',
 				'name'  => __( 'Release Notification Email', 'edd-recurring' ),
-				'desc'  => __( 'Enter the body text of the email that gets sent when you notify users of your download release.', 'edd-recurring' ),
+				'desc'  => __( 'Enter the body text of the email that gets sent when you notify users of your download release. <code>!!name!!</code> and <code>!!download!!</code> shortcdes available.', 'edd-recurring' ),
 				'type'  => 'rich_editor',
 				'std'   => __( "Hello {name}\n\nYour renewal payment in the amount of {amount} for {subscription_name} has been successfully processed.", 'edd-recurring' )
 			),
